@@ -17,6 +17,8 @@
 #ifndef ALLVARS_H
 #define ALLVARS_H
 
+#include "config.h"
+
 #include "tags.h"
 #include <gsl/gsl_rng.h>
 #include <stdio.h>

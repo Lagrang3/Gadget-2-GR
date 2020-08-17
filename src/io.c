@@ -1,3 +1,5 @@
+#include "allvars.h"
+#include "proto.h"
 #include <errno.h>
 #include <math.h>
 #include <mpi.h>
@@ -8,9 +10,6 @@
 #ifdef HAVE_HDF5
 #    include <hdf5.h>
 #endif
-
-#include "allvars.h"
-#include "proto.h"
 
 /*! \file io.c
  *  \brief Routines for producing a snapshot file on disk.

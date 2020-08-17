@@ -11,7 +11,7 @@ subdir('src')
 
 cc=meson.get_compiler('c')
 cmath=cc.find_library('m')
-fftw3 = dependency('fftw3')
+fftw = dependency('fftw')
 mpi = dependency('mpi')
 gsl = dependency('gsl')
 
@@ -21,6 +21,8 @@ if (_format.found())
     run_target('format', command: [_format,'-i',gadget_headers,gadget_src])
 endif
 
-gadget = executable('gadget2',gadget_src,gadget_headers,
+config = files(['config.h'])
+
+gadget = executable('gadget2',gadget_src,gadget_headers,config,
     include_directories: gadget_include,
-    dependencies: [cmath,fftw3,gsl,mpi])
+    dependencies: [cmath,fftw,gsl,mpi])
