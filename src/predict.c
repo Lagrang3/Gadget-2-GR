@@ -1,13 +1,12 @@
+#include <gsl/gsl_math.h>
+#include <math.h>
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
-#include <mpi.h>
-#include <gsl/gsl_math.h>
 
 #include "allvars.h"
 #include "proto.h"
-
 
 /*! \file predict.c
  *  \brief drift particles by a small time interval
@@ -15,7 +14,6 @@
  *  This function contains code to implement a drift operation on all the
  *  particles, which represents one part of the leapfrog integration scheme.
  */
-
 
 /*! This function drifts all particles from the current time to the future:
  *  time0 - > time1
@@ -30,69 +28,74 @@
  */
 void move_particles(int time0, int time1)
 {
-  int i, j;
-  double dt_drift, dt_gravkick, dt_hydrokick, dt_entr;
-  double t0, t1;
+    int i, j;
+    double dt_drift, dt_gravkick, dt_hydrokick, dt_entr;
+    double t0, t1;
 
+    t0 = second();
 
-  t0 = second();
-
-  if(All.ComovingIntegrationOn)
+    if (All.ComovingIntegrationOn)
     {
-      dt_drift = get_drift_factor(time0, time1);
-      dt_gravkick = get_gravkick_factor(time0, time1);
-      dt_hydrokick = get_hydrokick_factor(time0, time1);
+        dt_drift = get_drift_factor(time0, time1);
+        dt_gravkick = get_gravkick_factor(time0, time1);
+        dt_hydrokick = get_hydrokick_factor(time0, time1);
     }
-  else
+    else
     {
-      dt_drift = dt_gravkick = dt_hydrokick = (time1 - time0) * All.Timebase_interval;
+        dt_drift = dt_gravkick = dt_hydrokick =
+            (time1 - time0) * All.Timebase_interval;
     }
 
-  for(i = 0; i < NumPart; i++)
+    for (i = 0; i < NumPart; i++)
     {
-      for(j = 0; j < 3; j++)
-	P[i].Pos[j] += P[i].Vel[j] * dt_drift;
+        for (j = 0; j < 3; j++)
+            P[i].Pos[j] += P[i].Vel[j] * dt_drift;
 
-      if(P[i].Type == 0)
-	{
+        if (P[i].Type == 0)
+        {
 #ifdef PMGRID
-	  for(j = 0; j < 3; j++)
-	    SphP[i].VelPred[j] +=
-	      (P[i].GravAccel[j] + P[i].GravPM[j]) * dt_gravkick + SphP[i].HydroAccel[j] * dt_hydrokick;
+            for (j = 0; j < 3; j++)
+                SphP[i].VelPred[j] +=
+                    (P[i].GravAccel[j] + P[i].GravPM[j]) * dt_gravkick +
+                    SphP[i].HydroAccel[j] * dt_hydrokick;
 #else
-	  for(j = 0; j < 3; j++)
-	    SphP[i].VelPred[j] += P[i].GravAccel[j] * dt_gravkick + SphP[i].HydroAccel[j] * dt_hydrokick;
+            for (j = 0; j < 3; j++)
+                SphP[i].VelPred[j] += P[i].GravAccel[j] * dt_gravkick +
+                                      SphP[i].HydroAccel[j] * dt_hydrokick;
 #endif
-	  SphP[i].Density *= exp(-SphP[i].DivVel * dt_drift);
-	  SphP[i].Hsml *= exp(0.333333333333 * SphP[i].DivVel * dt_drift);
+            SphP[i].Density *= exp(-SphP[i].DivVel * dt_drift);
+            SphP[i].Hsml *= exp(0.333333333333 * SphP[i].DivVel * dt_drift);
 
-	  if(SphP[i].Hsml < All.MinGasHsml)
-	    SphP[i].Hsml = All.MinGasHsml;
+            if (SphP[i].Hsml < All.MinGasHsml)
+                SphP[i].Hsml = All.MinGasHsml;
 
-	  dt_entr = (time1 - (P[i].Ti_begstep + P[i].Ti_endstep) / 2) * All.Timebase_interval;
+            dt_entr = (time1 - (P[i].Ti_begstep + P[i].Ti_endstep) / 2) *
+                      All.Timebase_interval;
 
-	  SphP[i].Pressure = (SphP[i].Entropy + SphP[i].DtEntropy * dt_entr) * pow(SphP[i].Density, GAMMA);
-	}
+            SphP[i].Pressure = (SphP[i].Entropy + SphP[i].DtEntropy * dt_entr) *
+                               pow(SphP[i].Density, GAMMA);
+        }
     }
 
-  /* if domain-decomp and tree are not going to be reconstructed, update dynamically.  */
-  if(All.NumForcesSinceLastDomainDecomp < All.TotNumPart * All.TreeDomainUpdateFrequency)
+    /* if domain-decomp and tree are not going to be reconstructed, update
+     * dynamically.  */
+    if (All.NumForcesSinceLastDomainDecomp <
+        All.TotNumPart * All.TreeDomainUpdateFrequency)
     {
-      for(i = 0; i < Numnodestree; i++)
-	for(j = 0; j < 3; j++)
-	  Nodes[All.MaxPart + i].u.d.s[j] += Extnodes[All.MaxPart + i].vs[j] * dt_drift;
+        for (i = 0; i < Numnodestree; i++)
+            for (j = 0; j < 3; j++)
+                Nodes[All.MaxPart + i].u.d.s[j] +=
+                    Extnodes[All.MaxPart + i].vs[j] * dt_drift;
 
-      force_update_len();
+        force_update_len();
 
-      force_update_pseudoparticles();
+        force_update_pseudoparticles();
     }
 
-  t1 = second();
+    t1 = second();
 
-  All.CPU_Predict += timediff(t0, t1);
+    All.CPU_Predict += timediff(t0, t1);
 }
-
-
 
 /*! This function makes sure that all particle coordinates (Pos) are
  *  periodically mapped onto the interval [0, BoxSize].  After this function
@@ -102,30 +105,30 @@ void move_particles(int time0, int time1)
 #ifdef PERIODIC
 void do_box_wrapping(void)
 {
-  int i, j;
-  double boxsize[3];
+    int i, j;
+    double boxsize[3];
 
-  for(j = 0; j < 3; j++)
-    boxsize[j] = All.BoxSize;
+    for (j = 0; j < 3; j++)
+        boxsize[j] = All.BoxSize;
 
-#ifdef LONG_X
-  boxsize[0] *= LONG_X;
-#endif
-#ifdef LONG_Y
-  boxsize[1] *= LONG_Y;
-#endif
-#ifdef LONG_Z
-  boxsize[2] *= LONG_Z;
-#endif
+#    ifdef LONG_X
+    boxsize[0] *= LONG_X;
+#    endif
+#    ifdef LONG_Y
+    boxsize[1] *= LONG_Y;
+#    endif
+#    ifdef LONG_Z
+    boxsize[2] *= LONG_Z;
+#    endif
 
-  for(i = 0; i < NumPart; i++)
-    for(j = 0; j < 3; j++)
-      {
-	while(P[i].Pos[j] < 0)
-	  P[i].Pos[j] += boxsize[j];
+    for (i = 0; i < NumPart; i++)
+        for (j = 0; j < 3; j++)
+        {
+            while (P[i].Pos[j] < 0)
+                P[i].Pos[j] += boxsize[j];
 
-	while(P[i].Pos[j] >= boxsize[j])
-	  P[i].Pos[j] -= boxsize[j];
-      }
+            while (P[i].Pos[j] >= boxsize[j])
+                P[i].Pos[j] -= boxsize[j];
+        }
 }
 #endif

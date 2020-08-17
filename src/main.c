@@ -1,12 +1,11 @@
+#include <math.h>
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
-#include <mpi.h>
 
 #include "allvars.h"
 #include "proto.h"
-
 
 /*! \file main.c
  *  \brief start of the program
@@ -19,64 +18,66 @@
  *  run() is started, the main simulation loop, which iterates over
  *  the timesteps.
  */
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-  double t0, t1;
+    double t0, t1;
 
-  MPI_Init(&argc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &ThisTask);
-  MPI_Comm_size(MPI_COMM_WORLD, &NTask);
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &ThisTask);
+    MPI_Comm_size(MPI_COMM_WORLD, &NTask);
 
-  if(NTask <= 1)
+    if (NTask <= 1)
     {
-      if(ThisTask == 0)
-	printf
-	  ("Note: This is a massively parallel code, but you are running with 1 processor only.\nCompared to an equivalent serial code, there is some unnecessary overhead.\n");
+        if (ThisTask == 0)
+            printf(
+                "Note: This is a massively parallel code, but you are running "
+                "with 1 processor only.\nCompared to an equivalent serial "
+                "code, there is some unnecessary overhead.\n");
     }
 
-  for(PTask = 0; NTask > (1 << PTask); PTask++);
+    for (PTask = 0; NTask > (1 << PTask); PTask++)
+        ;
 
-  if(argc < 2)
+    if (argc < 2)
     {
-      if(ThisTask == 0)
-	{
-	  printf("Parameters are missing.\n");
-	  printf("Call with <ParameterFile> [<RestartFlag>]\n");
-	}
-      endrun(0);
+        if (ThisTask == 0)
+        {
+            printf("Parameters are missing.\n");
+            printf("Call with <ParameterFile> [<RestartFlag>]\n");
+        }
+        endrun(0);
     }
 
-  strcpy(ParameterFile, argv[1]);
+    strcpy(ParameterFile, argv[1]);
 
-  if(argc >= 3)
-    RestartFlag = atoi(argv[2]);
-  else
-    RestartFlag = 0;
+    if (argc >= 3)
+        RestartFlag = atoi(argv[2]);
+    else
+        RestartFlag = 0;
 
-  All.CPU_TreeConstruction = All.CPU_TreeWalk = All.CPU_Gravity = All.CPU_Potential = All.CPU_Domain =
-    All.CPU_Snapshot = All.CPU_Total = All.CPU_CommSum = All.CPU_Imbalance = All.CPU_Hydro =
-    All.CPU_HydCompWalk = All.CPU_HydCommSumm = All.CPU_HydImbalance =
-    All.CPU_EnsureNgb = All.CPU_Predict = All.CPU_TimeLine = All.CPU_PM = All.CPU_Peano = 0;
+    All.CPU_TreeConstruction = All.CPU_TreeWalk = All.CPU_Gravity =
+        All.CPU_Potential = All.CPU_Domain = All.CPU_Snapshot = All.CPU_Total =
+            All.CPU_CommSum = All.CPU_Imbalance = All.CPU_Hydro =
+                All.CPU_HydCompWalk = All.CPU_HydCommSumm =
+                    All.CPU_HydImbalance = All.CPU_EnsureNgb = All.CPU_Predict =
+                        All.CPU_TimeLine = All.CPU_PM = All.CPU_Peano = 0;
 
-  CPUThisRun = 0;
+    CPUThisRun = 0;
 
-  t0 = second();
+    t0 = second();
 
-  begrun();			/* set-up run  */
+    begrun(); /* set-up run  */
 
-  t1 = second();
-  CPUThisRun += timediff(t0, t1);
-  All.CPU_Total += timediff(t0, t1);
+    t1 = second();
+    CPUThisRun += timediff(t0, t1);
+    All.CPU_Total += timediff(t0, t1);
 
-  run();			/* main simulation loop */
+    run(); /* main simulation loop */
 
-  MPI_Finalize();		/* clean up & finalize MPI */
+    MPI_Finalize(); /* clean up & finalize MPI */
 
-  return 0;
+    return 0;
 }
-
-
-
 
 /* ----------------------------------------------------------------------
    The rest of this file contains documentation for compiling and
@@ -89,7 +90,7 @@ int main(int argc, char **argv)
 \author Volker Springel \n
         Max-Planck-Institute for Astrophysics \n
         Karl-Schwarzschild-Str. 1 \n
-        85740 Garching \n 
+        85740 Garching \n
         Germany \n
         volker@mpa-garching.mpg.de \n
 
@@ -115,7 +116,7 @@ explanation of GADGET's parameterfile and a short guide to compile-time
 options of the code.
 
 
-\section install Compilation 
+\section install Compilation
 
 GADGET-2 needs the following non-standard libraries for compilation:
 
@@ -166,7 +167,7 @@ used to signal whether a continuation from a set of restart files, or from
 a snapshot file, is desired. A typical command to start the code looks like
 the following: \n \n
 
- <b> mpirun -np 8 ./Gadget2 <parameterfile> [restartflag]</b> \n \n 
+ <b> mpirun -np 8 ./Gadget2 <parameterfile> [restartflag]</b> \n \n
 
 This would start the code using 8 processors, assuming that the parallel
 environment uses the <em>mpirun</em> command to start MPI
@@ -188,16 +189,6 @@ default of "0"), the code starts from initial conditions.
 
 */
 
-
-
-
-
-
-
-
-
-
-
 /*! \page parameterfile  Parameterfile of GADGET-2
 
 The parameterfile for GADGET-2 is a simple text file, consisting of pairs of
@@ -209,7 +200,7 @@ each one needs to occur exactly one time, otherwise an error message will
 be produced. Empty lines, or lines beginning with a \%-sign, are ignored and
 treated as comments.
 
- 
+
 - \b InitCondFile \n The filename of the initial conditions file. If a
              restart from a snapshot with the "2" option is desired, one
              needs to specify the snapshot file here.
@@ -263,7 +254,7 @@ treated as comments.
 - \b ComovingIntegrationOn \n If set to "1", the code assumes that a
              cosmological integration in comoving coordinates is carried
              out, otherwise ordinary Newtonian dynamics is assumed.
-                                
+
 
 - \b TypeOfTimestepCriterion \n This parameter can in principle be used to
              select different kinds of timestep criteria for gravitational
@@ -377,7 +368,8 @@ treated as comments.
              small acceleration. For cosmological simulations, the
              parameter given here is the maximum allowed step in the
              logarithm of the expansion factor. Note that the definition
-             of MaxSizeTimestep has <em>changed</em> compared to Gadget-1.1 for cosmological simulations.
+             of MaxSizeTimestep has <em>changed</em> compared to Gadget-1.1 for
+cosmological simulations.
 
 
 - \b MinSizeTimestep \n If a particle requests a timestep smaller than the
@@ -418,7 +410,7 @@ treated as comments.
 - \b MaxRMSDisplacementFac \n This parameter is an additional timestep
              criterion for the long-range integration in case the TreePM
              algorithm is used. It limits the long-range timestep such that
-             the rms-displacement of particles per step is at most 
+             the rms-displacement of particles per step is at most
               <em>MaxRMSDisplacementFac</em> times the mean
              particle separation, or the mesh-scale, whichever is smaller.
 
@@ -554,15 +546,6 @@ treated as comments.
 
 */
 
-
-
-
-
-
-
-
-
-
 /*! \page Gadget-Makefile  Makefile of GADGET-2
 
 A number of features of GADGET-2 are controlled with compile-time options
@@ -651,8 +634,8 @@ compile the code and to run the simulation.
      particles. Normally, the simulation will be interrupted if high-res
      particles leave this region in the course of the run. However, by
      setting this parameter to a value larger than one, the high-res region
-     can be expanded on the fly.  For example, setting it to 1.4 will enlarge its
-     side-length by 40% in such an event (it remains centred on the high-res
+     can be expanded on the fly.  For example, setting it to 1.4 will enlarge
+its side-length by 40% in such an event (it remains centred on the high-res
      particles). Hence, with such a setting, the high-res region may expand
      or move by a limited amount. If in addition \b SYNCHRONIZATION is
      activated, then the code will be able to continue even if high-res
@@ -670,7 +653,7 @@ compile the code and to run the simulation.
      the short-range tree-force is evaluated (in case the TreePM algorithm
      is used). The default value is 4.5, given in mesh-cells.
 
-\n 
+\n
 \section secmake4 Single or double precision
 - \b DOUBLEPRECISION \n This makes the code store and compute internal
      particle data in double precision. Note that output files are
@@ -759,7 +742,7 @@ compile the code and to run the simulation.
      accessed without type prefix (adopting whatever was chosen as default
      at compile-time of fftw). Otherwise, the type prefix 'd' for
      double-precision is used.
- 
+
 - \b LONG_X/Y/Z \n These options can be used together with PERIODIC and
      NOGRAVITY only.  When set, the options define numerical factors that
      can be used to distort the periodic simulation cube into a
@@ -809,7 +792,7 @@ compile the code and to run the simulation.
 - \b LONGIDS \n If this is set, the code assumes that particle-IDs are
      stored as 64-bit long integers. This is only really needed if you want
      to go beyond ~2 billion particles.
-     
+
 \n
 \section secmake8 Testing and Debugging options
 - \b FORCETEST=0.01 \n This can be set to check the force accuracy of the
