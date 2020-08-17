@@ -1,3 +1,10 @@
+#----------------------------------------------------------------------
+# WARNING!
+# This Makefile is OBSOLETE.
+# Compilation and linking should be performed through the
+# autoconfiguration tool 'meson'
+#----------------------------------------------------------------------
+
 
 #----------------------------------------------------------------------
 # From the list below, please activate/deactivate the options that     
