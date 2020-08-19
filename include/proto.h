@@ -174,18 +174,19 @@ void open_outputfiles(void);
 peanokey peano_hilbert_key(int x, int y, int z, int bits);
 void peano_hilbert_order(void);
 
-void pm_init_nonperiodic(void);
-void pm_init_nonperiodic_allocate(int dimprod);
-void pm_init_nonperiodic_free(void);
 void pm_init_periodic(void);
-void pm_init_periodic_allocate(int dimprod);
-void pm_init_periodic_free(void);
+// void pm_init_periodic_allocate(int dimprod); // this is private
+// void pm_init_periodic_free(void); // this is private
 void pm_init_regionsize(void);
+void pmforce_periodic(void);
+void pmpotential_periodic(void);
+
+void pm_init_nonperiodic(void);
+// void pm_init_nonperiodic_allocate(int dimprod); // this is private
+// void pm_init_nonperiodic_free(void); // this is private
+int pmpotential_nonperiodic(int grnr);
 void pm_setup_nonperiodic_kernel(void);
 int pmforce_nonperiodic(int grnr);
-void pmforce_periodic(void);
-int pmpotential_nonperiodic(int grnr);
-void pmpotential_periodic(void);
 
 double pow(double, double); /* on some old DEC Alphas, the correct prototype for
                                pow() is missing, even when math.h is included */
